@@ -22,8 +22,8 @@ func main() {
 	commandArgs := flag.String("args", "", "The command arguments")
 	logFileName := flag.String("logfile", "-", "The name of the file to log")
 	useTLS := flag.Bool("useTLS", true, "Use TLS to connect to the server")
-	server := flag.String("server", "go.tty-share.com:7654", "tty-server address")
-	userId := flag.String("userId", "", "The user id")
+	server := flag.String("server", "localhost:7654", "tty-server address")
+	userID := flag.String("userID", "", "The user ID")
 	flag.Parse()
 
 	log.Level = logrus.ErrorLevel
@@ -62,7 +62,7 @@ func main() {
 
 	serverConnection := common.NewTTYProtocolConn(rawConnection)
 	reply, err := serverConnection.InitSender(common.SenderSessionInfo{
-		UserId:            *userId,
+		UserID:            *userID,
 		Salt:              "salt",
 		PasswordVerifierA: "PV_A",
 	})
@@ -120,6 +120,12 @@ func main() {
 
 				ptyMaster.Refresh()
 				fmt.Printf("New receiver connected: %s ", msgReceiverConnected.Name)
+			}
+			if msg.Type == common.MsgIDWinSize {
+				var msgWinSize common.MsgTTYWinSize
+				json.Unmarshal(msg.Data, &msgWinSize)
+				log.Infof("New winsize %d %d", msgWinSize.Rows, msgWinSize.Cols)
+				ptyMaster.SetWinSize(msgWinSize.Rows, msgWinSize.Cols)
 			}
 		}
 	}()

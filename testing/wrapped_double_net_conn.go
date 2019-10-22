@@ -4,7 +4,7 @@ import (
 	"net"
 	"sync"
 
-	"github.com/elisescu/tty-share/common"
+	"github.com/Yi-Tseng/tty-share/common"
 )
 
 func NewDoubleNetConn(debug bool) (client net.Conn, server net.Conn) {

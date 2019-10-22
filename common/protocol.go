@@ -27,7 +27,7 @@ type MsgAll struct {
 
 // These messages are used between the server and the sender/receiver
 type MsgTTYSenderInitRequest struct {
-	UserId            string
+	UserID            string
 	Salt              string
 	PasswordVerifierA string
 }

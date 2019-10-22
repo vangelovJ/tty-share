@@ -13,7 +13,7 @@ type ReceiverSessionInfo struct {
 }
 
 type SenderSessionInfo struct {
-	UserId            string
+	UserID            string
 	Salt              string
 	PasswordVerifierA string
 }
@@ -69,7 +69,7 @@ func (protoConn *TTYProtocolConn) InitSender(senderInfo SenderSessionInfo) (serv
 	var replyMsg MsgTTYSenderInitReply
 
 	msgInitReq := MsgTTYSenderInitRequest{
-		UserId:            senderInfo.UserId,
+		UserID:            senderInfo.UserID,
 		Salt:              senderInfo.Salt,
 		PasswordVerifierA: senderInfo.PasswordVerifierA,
 	}
@@ -98,16 +98,16 @@ func (protoConn *TTYProtocolConn) InitServer(serverInfo ServerSessionInfo) (send
 		return
 	}
 
-	userId := requestMsg.UserId
+	userID := requestMsg.UserID
 
 	// Send back a InitReply message
 	if err = MarshalAndWriteMsg(protoConn.netConnection, MsgTTYSenderInitReply{
-		ReceiverURLWebReadWrite: serverInfo.URLWebReadWrite + userId}); err != nil {
+		ReceiverURLWebReadWrite: serverInfo.URLWebReadWrite + userID}); err != nil {
 		return
 	}
 
 	senderInfo = SenderSessionInfo{
-		UserId:            userId,
+		UserID:            userID,
 		Salt:              requestMsg.Salt,
 		PasswordVerifierA: requestMsg.PasswordVerifierA,
 	}

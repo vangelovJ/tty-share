@@ -39,7 +39,7 @@ func (session *ttyShareSession) InitSender() error {
 	senderInfo, err := session.ttySenderConnection.InitServer(ServerSessionInfo{
 		URLWebReadWrite: session.serverURL + "/s/",
 	})
-	session.sessionID = senderInfo.UserId
+	session.sessionID = senderInfo.UserID
 	return err
 }
 
@@ -166,8 +166,8 @@ func (session *ttyShareSession) HandleReceiver(rawConn *WSConnection) {
 
 		switch msg.Type {
 		case MsgIDWinSize:
-			// Ignore these messages from the receiver. For now, the policy is that the sender
-			// decides on the window size.
+			rawData, _ := json.Marshal(msg)
+			senderConn.WriteRawData(rawData)
 		case MsgIDWrite:
 			rawData, _ := json.Marshal(msg)
 			senderConn.WriteRawData(rawData)

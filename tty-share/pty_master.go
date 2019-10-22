@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	ptyDevice "github.com/elisescu/pty"
+	ptyDevice "github.com/creack/pty"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -75,7 +75,14 @@ func (pty *ptyMaster) Read(b []byte) (int, error) {
 }
 
 func (pty *ptyMaster) SetWinSize(rows, cols int) {
-	ptyDevice.Setsize(pty.ptyFile, rows, cols)
+	// ptyDevice.Setsize(pty.ptyFile, rows, cols)
+
+	ws := &ptyDevice.Winsize{
+		Rows: uint16(rows),
+		Cols: uint16(cols),
+	}
+
+	ptyDevice.Setsize(pty.ptyFile, ws)
 }
 
 func (pty *ptyMaster) Refresh() {

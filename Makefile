@@ -1,4 +1,4 @@
-DEPS=github.com/elisescu/pty github.com/sirupsen/logrus golang.org/x/crypto/ssh/terminal github.com/gorilla/mux github.com/gorilla/websocket github.com/go-bindata/go-bindata/...
+DEPS=github.com/creack/pty github.com/sirupsen/logrus golang.org/x/crypto/ssh/terminal github.com/gorilla/mux github.com/gorilla/websocket github.com/go-bindata/go-bindata/...
 DEST_DIR=./out
 TTY_SERVER=$(DEST_DIR)/tty-server
 TTY_SHARE=$(DEST_DIR)/tty-share
@@ -66,4 +66,4 @@ runc: $(TTY_SHARE)
 	$(TTY_SHARE) --useTLS=false --server localhost:7654
 
 test:
-	@go test github.com/elisescu/tty-share/testing -v
+	@go test github.com/yi-Tseng/tty-share/testing -v

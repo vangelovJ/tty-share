@@ -1,4 +1,5 @@
 import { Terminal, IEvent, IDisposable } from "xterm";
+import { FitAddon } from 'xterm-addon-fit';
 
 import base64 from './base64';
 
@@ -10,6 +11,7 @@ interface IRectSize {
 class TTYReceiver {
     private xterminal: Terminal;
     private containerElement: HTMLElement;
+    private fitAddon: FitAddon;
 
     constructor(wsAddress: string, container: HTMLDivElement) {
         const connection = new WebSocket(wsAddress);
@@ -18,27 +20,23 @@ class TTYReceiver {
             cursorBlink: true,
             macOptionIsMeta: true,
             scrollback: 0,
-            fontSize: 12,
+            fontSize: 16,
             letterSpacing: 0,
         });
+        this.fitAddon = new FitAddon();
+        this.xterminal.loadAddon(this.fitAddon);
 
         this.containerElement = container;
         this.xterminal.open(container);
+        this.fitAddon.fit();
 
         connection.onclose =  (evt: CloseEvent) => {
-
            this.xterminal.blur();
            this.xterminal.setOption('cursorBlink', false);
            this.xterminal.clear();
            this.xterminal.write('Session closed');
         }
-
         this.xterminal.focus();
-
-        const containerPixSize = this.getElementPixelsSize(container);
-        const newFontSize = this.guessNewFontSize(this.xterminal.cols, this.xterminal.rows, containerPixSize.width, containerPixSize.height);
-        this.xterminal.setOption('fontSize', newFontSize);
-
         connection.onmessage = (ev: MessageEvent) => {
             let message = JSON.parse(ev.data)
             let msgData = base64.decode(message.Data)
@@ -47,21 +45,9 @@ class TTYReceiver {
                 let writeMsg = JSON.parse(msgData)
                 this.xterminal.writeUtf8(base64.base64ToArrayBuffer(writeMsg.Data));
             }
-
-            if (message.Type == "WinSize") {
-                let winSizeMsg = JSON.parse(msgData)
-
-                const containerPixSize = this.getElementPixelsSize(container);
-                const newFontSize = this.guessNewFontSize(winSizeMsg.Cols, winSizeMsg.Rows, containerPixSize.width, containerPixSize.height);
-                this.xterminal.setOption('fontSize', newFontSize);
-
-                // Now set the new size.
-                this.xterminal.resize(winSizeMsg.Cols, winSizeMsg.Rows)
-            }
         }
 
-            // TODO: .on() is deprecated. Should be replaced.
-        this.xterminal.on('data', function (data) {
+        this.xterminal.onData(function (data) {
             let writeMessage = {
                 Type: "Write",
                 Data: base64.encode(JSON.stringify({ Size: data.length, Data: base64.encode(data)})),
@@ -70,7 +56,20 @@ class TTYReceiver {
             connection.send(dataToSend);
         });
 
+
+        this.xterminal.onResize((e) => {
+            let writeMessage = {
+                Type: "WinSize",
+                Data: base64.encode(JSON.stringify({ Cols: e.cols, Rows: e.rows})),
+            }
+            let dataToSend = JSON.stringify(writeMessage)
+            connection.send(dataToSend);
+        })
+        window.onresize = () => {
+            this.fitAddon.fit();
+        }
     }
+
 
     // Get the pixels size of the element, after all CSS was applied. This will be used in an ugly
     // hack to guess what fontSize to set on the xterm object. Horrible hack, but I feel less bad
