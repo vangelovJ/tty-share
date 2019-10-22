@@ -11,7 +11,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/elisescu/tty-share/common"
+	"github.com/Yi-Tseng/tty-share/common"
 	logrus "github.com/sirupsen/logrus"
 )
 
