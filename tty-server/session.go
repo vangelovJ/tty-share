@@ -2,13 +2,11 @@ package main
 
 import (
 	"container/list"
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"net"
 	"sync"
 
-	. "github.com/elisescu/tty-share/common"
+	. "github.com/Yi-Tseng/tty-share/common"
 )
 
 type sessionInfo struct {
@@ -26,22 +24,9 @@ type ttyShareSession struct {
 	lastWindowSizeMsg      MsgAll
 }
 
-func generateNewSessionID() string {
-	binID := make([]byte, 32)
-	_, err := rand.Read(binID)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return base64.URLEncoding.EncodeToString([]byte(binID))
-}
-
 func newTTYShareSession(conn net.Conn, serverURL string) *ttyShareSession {
-	sessionID := generateNewSessionID()
-
 	ttyShareSession := &ttyShareSession{
-		sessionID:              sessionID,
+		sessionID:              "",
 		serverURL:              serverURL,
 		ttySenderConnection:    NewTTYProtocolConn(conn),
 		ttyReceiverConnections: list.New(),
@@ -51,9 +36,10 @@ func newTTYShareSession(conn net.Conn, serverURL string) *ttyShareSession {
 }
 
 func (session *ttyShareSession) InitSender() error {
-	_, err := session.ttySenderConnection.InitServer(ServerSessionInfo{
-		URLWebReadWrite: session.serverURL + "/s/" + session.GetID(),
+	senderInfo, err := session.ttySenderConnection.InitServer(ServerSessionInfo{
+		URLWebReadWrite: session.serverURL + "/s/",
 	})
+	session.sessionID = senderInfo.UserId
 	return err
 }
 

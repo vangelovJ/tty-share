@@ -23,6 +23,7 @@ func main() {
 	logFileName := flag.String("logfile", "-", "The name of the file to log")
 	useTLS := flag.Bool("useTLS", true, "Use TLS to connect to the server")
 	server := flag.String("server", "go.tty-share.com:7654", "tty-server address")
+	userId := flag.String("userId", "", "The user id")
 	flag.Parse()
 
 	log.Level = logrus.ErrorLevel
@@ -61,6 +62,7 @@ func main() {
 
 	serverConnection := common.NewTTYProtocolConn(rawConnection)
 	reply, err := serverConnection.InitSender(common.SenderSessionInfo{
+		UserId:            *userId,
 		Salt:              "salt",
 		PasswordVerifierA: "PV_A",
 	})

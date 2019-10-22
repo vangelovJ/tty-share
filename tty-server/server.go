@@ -49,6 +49,14 @@ type TTYServer struct {
 	activeSessionsRWLock sync.RWMutex
 }
 
+type TTYServerError struct {
+	msg string
+}
+
+func (err *TTYServerError) Error() string {
+	return err.msg
+}
+
 func (server *TTYServer) serveContent(w http.ResponseWriter, r *http.Request, name string) {
 	// If a path to the frontend resources was passed, serve from there, otherwise, serve from the
 	// builtin bundle
@@ -197,10 +205,18 @@ func (server *TTYServer) handleSession(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func addNewSession(server *TTYServer, session *ttyShareSession) {
+func addNewSession(server *TTYServer, session *ttyShareSession) error {
 	server.activeSessionsRWLock.Lock()
-	server.activeSessions[session.GetID()] = session
-	server.activeSessionsRWLock.Unlock()
+	defer server.activeSessionsRWLock.Unlock()
+	if _, ok := server.activeSessions[session.GetID()]; ok {
+		// Session exists
+		return &TTYServerError{
+			msg: "Session " + session.GetID() + " exists",
+		}
+	} else {
+		server.activeSessions[session.GetID()] = session
+	}
+	return nil
 }
 
 func removeSession(server *TTYServer, session *ttyShareSession) {
@@ -227,7 +243,10 @@ func handleTTYSenderConnection(server *TTYServer, conn net.Conn) {
 		return
 	}
 
-	addNewSession(server, session)
+	if err := addNewSession(server, session); err != nil {
+		log.Warn(err)
+		return
+	}
 
 	session.HandleSenderConnection()
 
