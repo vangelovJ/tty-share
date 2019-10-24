@@ -31,7 +31,6 @@ type SessionTemplateModel struct {
 // TTYServerConfig is used to configure the tty server before it is started
 type TTYServerConfig struct {
 	WebAddress   string
-	ServerURL    string
 	FrontendPath string
 	CommandName  string
 	CommandArgs  string

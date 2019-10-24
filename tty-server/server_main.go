@@ -15,7 +15,6 @@ func main() {
 	commandName := flag.String("command", "bash", "The base command to run when a client attach")
 	commandArgs := flag.String("args", "", "The base command arguments")
 	webAddress := flag.String("web_address", ":80", "The bind address for the web interface. This is the listening address for the web server that hosts the \"browser terminal\". You might want to change this if you don't want to use the port 80, or only bind the localhost.")
-	url := flag.String("url", "http://localhost", "The public web URL the server will be accessible at. This will be sent back to the tty-share tool to display it to the user.")
 	frontendPath := flag.String("frontend_path", "", "The path to the frontend resources. By default, these resources are included in the server binary, so you only need this path if you don't want to use the bundled ones.")
 	flag.Parse()
 
@@ -24,7 +23,6 @@ func main() {
 
 	config := TTYServerConfig{
 		WebAddress:   *webAddress,
-		ServerURL:    *url,
 		FrontendPath: *frontendPath,
 		CommandName:  *commandName,
 		CommandArgs:  *commandArgs,
