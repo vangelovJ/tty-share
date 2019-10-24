@@ -1,13 +1,12 @@
 package main
 
 import (
-	"errors"
 	"html/template"
 	"mime"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/mux"
@@ -31,24 +30,22 @@ type SessionTemplateModel struct {
 
 // TTYServerConfig is used to configure the tty server before it is started
 type TTYServerConfig struct {
-	WebAddress       string
-	TTYSenderAddress string
-	ServerURL        string
-	// The TLS Cert and Key can be null, if TLS should not be used
-	TLSCertFile  string
-	TLSKeyFile   string
+	WebAddress   string
+	ServerURL    string
 	FrontendPath string
+	CommandName  string
+	CommandArgs  string
 }
 
 // TTYServer represents the instance of a tty server
 type TTYServer struct {
 	httpServer           *http.Server
-	ttySendersListener   net.Listener
 	config               TTYServerConfig
-	activeSessions       map[string]*ttyShareSession
+	activeSessions       map[string]*ptyMaster
 	activeSessionsRWLock sync.RWMutex
 }
 
+// TTYServerError represents the instance of a tty server error
 type TTYServerError struct {
 	msg string
 }
@@ -117,7 +114,7 @@ func NewTTYServer(config TTYServerConfig) (server *TTYServer) {
 		server.serveContent(w, r, "404.html")
 	})
 
-	server.activeSessions = make(map[string]*ttyShareSession)
+	server.activeSessions = make(map[string]*ptyMaster)
 	server.httpServer.Handler = routesHandler
 	return server
 }
@@ -149,14 +146,15 @@ func (server *TTYServer) handleWebsocket(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	session := getSession(server, sessionID)
+	session := server.getSession(sessionID)
 
 	if session == nil {
-		log.Error("WE connection for invalid sessionID: ", sessionID, ". Killing it.")
+		log.Errorf("We connection for invalid sessionID: %s.", sessionID)
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
+	// TODO: attach the ptyMaster
 	session.HandleReceiver(newWSConnection(conn))
 }
 
@@ -164,14 +162,20 @@ func (server *TTYServer) handleSession(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	sessionID := vars["sessionID"]
 
-	log.Debug("Handling web TTYReceiver session: ", sessionID)
+	log.Debugf("Handling web TTYReceiver session: %s", sessionID)
 
-	session := getSession(server, sessionID)
+	session := server.getSession(sessionID)
 
-	// No valid session with this ID
+	// No valid session with this ID, create a new one and start it
 	if session == nil {
-		server.serveContent(w, r, "invalid-session.html")
-		return
+		session = server.createNewSession(sessionID)
+		go func() {
+			server.addSession(sessionID, session)
+			session.Wait()
+			log.Infof("Session %s stopped", sessionID)
+
+			server.removeSession(session)
+		}()
 	}
 
 	var t *template.Template
@@ -205,27 +209,31 @@ func (server *TTYServer) handleSession(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func addNewSession(server *TTYServer, session *ttyShareSession) error {
+func (server *TTYServer) removeSession(session *ptyMaster) {
 	server.activeSessionsRWLock.Lock()
-	defer server.activeSessionsRWLock.Unlock()
-	if _, ok := server.activeSessions[session.GetID()]; ok {
-		// Session exists
-		return &TTYServerError{
-			msg: "Session " + session.GetID() + " exists",
-		}
-	} else {
-		server.activeSessions[session.GetID()] = session
-	}
-	return nil
-}
-
-func removeSession(server *TTYServer, session *ttyShareSession) {
-	server.activeSessionsRWLock.Lock()
-	delete(server.activeSessions, session.GetID())
+	delete(server.activeSessions, session.GetSessionID())
 	server.activeSessionsRWLock.Unlock()
 }
 
-func getSession(server *TTYServer, sessionID string) (session *ttyShareSession) {
+func (server *TTYServer) addSession(sessionID string, session *ptyMaster) (err error) {
+	server.activeSessionsRWLock.Lock()
+	var ok bool
+	if _, ok = server.activeSessions[sessionID]; ok {
+		log.Warnf("Can not add session %s: already exists", sessionID)
+		return &TTYServerError{msg: "Session exists"}
+	}
+	server.activeSessions[sessionID] = session
+	server.activeSessionsRWLock.Unlock()
+	return
+}
+
+func (server *TTYServer) createNewSession(sessionID string) (session *ptyMaster) {
+	session = ptyMasterNew(sessionID)
+	session.Start(server.config.CommandName, strings.Fields(server.config.CommandArgs))
+	return
+}
+
+func (server *TTYServer) getSession(sessionID string) (session *ptyMaster) {
 	// TODO: move this in a better place
 	server.activeSessionsRWLock.RLock()
 	session = server.activeSessions[sessionID]
@@ -233,81 +241,16 @@ func getSession(server *TTYServer, sessionID string) (session *ttyShareSession) 
 	return
 }
 
-func handleTTYSenderConnection(server *TTYServer, conn net.Conn) {
-	defer conn.Close()
-
-	session := newTTYShareSession(conn, server.config.ServerURL)
-
-	if err := session.InitSender(); err != nil {
-		log.Warnf("Cannot create session with %s. Error: %s", conn.RemoteAddr().String(), err.Error())
-		return
-	}
-
-	if err := addNewSession(server, session); err != nil {
-		log.Warn(err)
-		return
-	}
-
-	session.HandleSenderConnection()
-
-	removeSession(server, session)
-	log.Debug("Finished session ", session.GetID(), ". Removing it.")
-}
-
 // Listen starts listening on connections
 func (server *TTYServer) Listen() (err error) {
-	var wg sync.WaitGroup
-	runTLS := server.config.TLSCertFile != "" && server.config.TLSKeyFile != ""
-
-	// Start listening on the frontend side
-	wg.Add(1)
-	go func() {
-		if !runTLS {
-			err = server.httpServer.ListenAndServe()
-		} else {
-			err = server.httpServer.ListenAndServeTLS(server.config.TLSCertFile, server.config.TLSKeyFile)
-		}
-		// Just in case we are existing because of an error, close the other listener too
-		if server.ttySendersListener != nil {
-			server.ttySendersListener.Close()
-		}
-		wg.Done()
-	}()
-
-	// TODO: Add support for listening for connections over TLS
-	// Listen on connections on the tty sender side
-	server.ttySendersListener, err = net.Listen("tcp", server.config.TTYSenderAddress)
-	if err != nil {
-		log.Error("Cannot create the front server. Error: ", err.Error())
-		return
-	}
-
-	for {
-		connection, err := server.ttySendersListener.Accept()
-		if err == nil {
-			go handleTTYSenderConnection(server, connection)
-		} else {
-			break
-		}
-	}
-	// Close the http side too
-	if server.httpServer != nil {
-		server.httpServer.Close()
-	}
-
-	wg.Wait()
+	err = server.httpServer.ListenAndServe()
 	log.Debug("Server finished")
 	return
 }
 
 // Stop closes down the server
-func (server *TTYServer) Stop() error {
+func (server *TTYServer) Stop() (err error) {
 	log.Debug("Stopping the server")
-	err1 := server.httpServer.Close()
-	err2 := server.ttySendersListener.Close()
-	if err1 != nil || err2 != nil {
-		//TODO: do this nicer
-		return errors.New(err1.Error() + err2.Error())
-	}
-	return nil
+	err = server.httpServer.Close()
+	return
 }
