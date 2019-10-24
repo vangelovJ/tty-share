@@ -28,7 +28,6 @@ class TTYReceiver {
 
         this.containerElement = container;
         this.xterminal.open(container);
-        this.fitAddon.fit();
 
         connection.onclose =  (evt: CloseEvent) => {
            this.xterminal.blur();
@@ -68,6 +67,8 @@ class TTYReceiver {
         window.onresize = () => {
             this.fitAddon.fit();
         }
+
+        this.fitAddon.fit();
     }
 
 
