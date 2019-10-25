@@ -101,7 +101,8 @@ func NewTTYServer(config TTYServerConfig) (server *TTYServer) {
 		})))
 
 	routesHandler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "https://github.com/Yi-Tseng/tty-share", http.StatusMovedPermanently)
+		// Default session
+		http.Redirect(w, r, "/s/1", http.StatusMovedPermanently)
 	})
 	routesHandler.HandleFunc("/s/{sessionID}", func(w http.ResponseWriter, r *http.Request) {
 		server.handleSession(w, r)
