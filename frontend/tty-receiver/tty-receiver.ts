@@ -18,7 +18,7 @@ class TTYReceiver {
         this.xterminal = new Terminal({
             cursorBlink: true,
             macOptionIsMeta: true,
-            scrollback: 0,
+            scrollback: 1000,
             fontSize: 16,
             letterSpacing: 0,
         });
