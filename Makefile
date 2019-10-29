@@ -39,7 +39,7 @@ clean:
 ## Development helper targets
 ### Runs the server, without TLS/HTTPS (no need for localhost testing)
 runs: $(TTY_SERVER)
-	$(TTY_SERVER) --url http://localhost:9090 --web_address :9090 -frontend_path ./frontend/public
+	$(TTY_SERVER) --web_address :9090 -frontend_path ./frontend/public
 
 test:
 	@go test github.com/yi-Tseng/tty-share/testing -v

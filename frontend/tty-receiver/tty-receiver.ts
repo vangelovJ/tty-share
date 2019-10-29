@@ -12,10 +12,9 @@ class TTYReceiver {
     private xterminal: Terminal;
     private containerElement: HTMLElement;
     private fitAddon: FitAddon;
+    private connection: WebSocket;
 
     constructor(wsAddress: string, container: HTMLDivElement) {
-        const connection = new WebSocket(wsAddress);
-
         this.xterminal = new Terminal({
             cursorBlink: true,
             macOptionIsMeta: true,
@@ -25,18 +24,50 @@ class TTYReceiver {
         });
         this.fitAddon = new FitAddon();
         this.xterminal.loadAddon(this.fitAddon);
-
         this.containerElement = container;
         this.xterminal.open(container);
-
-        connection.onclose =  (evt: CloseEvent) => {
-           this.xterminal.blur();
-           this.xterminal.setOption('cursorBlink', false);
-           this.xterminal.clear();
-           this.xterminal.write('Session closed');
+        var ttyReceiver = this;
+        this.xterminal.onData(function (data) {
+            let writeMessage = {
+                Type: "Write",
+                Data: base64.encode(JSON.stringify({ Size: data.length, Data: base64.encode(data)})),
+            }
+            let dataToSend = JSON.stringify(writeMessage)
+            ttyReceiver.connection.send(dataToSend);
+        });
+        this.xterminal.onResize((e) => {
+            let writeMessage = {
+                Type: "WinSize",
+                Data: base64.encode(JSON.stringify({ Cols: e.cols, Rows: e.rows})),
+            }
+            let dataToSend = JSON.stringify(writeMessage)
+            ttyReceiver.connection.send(dataToSend);
+        })
+        window.onresize = () => {
+            ttyReceiver.fitAddon.fit();
         }
-        this.xterminal.focus();
-        connection.onmessage = (ev: MessageEvent) => {
+        this.xterminal.write("Connecting to the server...")
+        this.initWebSocket(wsAddress)
+    }
+
+    private initWebSocket(wsAddress: string) {
+        this.connection = new WebSocket(wsAddress);
+        var ttyReceiver = this;
+        this.connection.onopen = (evt: Event) => {
+            this.xterminal.focus();
+            this.fitAddon.fit();
+            this.xterminal.setOption('cursorBlink', true);
+        }
+        this.connection.onclose =  (evt: CloseEvent) => {
+            this.xterminal.blur();
+            this.xterminal.setOption('cursorBlink', false);
+            this.xterminal.write('Session closed\n\r');
+            this.xterminal.write('Reconnecting after 3 second...\n\r');
+            setTimeout(() => {
+                this.initWebSocket(wsAddress)
+            }, 3000);
+        }
+        this.connection.onmessage = (ev: MessageEvent) => {
             let message = JSON.parse(ev.data)
             let msgData = base64.decode(message.Data)
 
@@ -45,32 +76,7 @@ class TTYReceiver {
                 this.xterminal.writeUtf8(base64.base64ToArrayBuffer(writeMsg.Data));
             }
         }
-
-        this.xterminal.onData(function (data) {
-            let writeMessage = {
-                Type: "Write",
-                Data: base64.encode(JSON.stringify({ Size: data.length, Data: base64.encode(data)})),
-            }
-            let dataToSend = JSON.stringify(writeMessage)
-            connection.send(dataToSend);
-        });
-
-
-        this.xterminal.onResize((e) => {
-            let writeMessage = {
-                Type: "WinSize",
-                Data: base64.encode(JSON.stringify({ Cols: e.cols, Rows: e.rows})),
-            }
-            let dataToSend = JSON.stringify(writeMessage)
-            connection.send(dataToSend);
-        })
-        window.onresize = () => {
-            this.fitAddon.fit();
-        }
-
-        this.fitAddon.fit();
     }
-
 
     // Get the pixels size of the element, after all CSS was applied. This will be used in an ugly
     // hack to guess what fontSize to set on the xterm object. Horrible hack, but I feel less bad

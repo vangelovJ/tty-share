@@ -148,10 +148,16 @@ func (server *TTYServer) handleWebsocket(w http.ResponseWriter, r *http.Request)
 
 	session := server.getSession(sessionID)
 
+	// No valid session with this ID, create a new one and start it
 	if session == nil {
-		log.Errorf("We connection for invalid sessionID: %s.", sessionID)
-		w.WriteHeader(http.StatusForbidden)
-		return
+		session = server.createNewSession(sessionID)
+		go func() {
+			server.addSession(sessionID, session)
+			session.Wait()
+			log.Infof("Session %s stopped", sessionID)
+
+			server.removeSession(session)
+		}()
 	}
 
 	// TODO: attach the ptyMaster
