@@ -46,7 +46,7 @@ class TTYReceiver {
         window.onresize = () => {
             ttyReceiver.fitAddon.fit();
         }
-        this.xterminal.write("Connecting to the server...")
+        this.xterminal.write("Connecting to the server...\n\r");
         this.initWebSocket(wsAddress)
     }
 
@@ -55,6 +55,7 @@ class TTYReceiver {
         var ttyReceiver = this;
         this.connection.onopen = (evt: Event) => {
             this.xterminal.focus();
+            this.xterminal.resize(this.xterminal.cols-1, this.xterminal.rows-1);
             this.fitAddon.fit();
             this.xterminal.setOption('cursorBlink', true);
         }
