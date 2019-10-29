@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"html/template"
 	"mime"
 	"net/http"
@@ -47,6 +48,10 @@ type TTYServer struct {
 // TTYServerError represents the instance of a tty server error
 type TTYServerError struct {
 	msg string
+}
+
+type SessionList struct {
+	sessions []string
 }
 
 func (err *TTYServerError) Error() string {
@@ -110,6 +115,9 @@ func NewTTYServer(config TTYServerConfig) (server *TTYServer) {
 	routesHandler.HandleFunc("/ws/{sessionID}", func(w http.ResponseWriter, r *http.Request) {
 		server.handleWebsocket(w, r)
 	})
+	routesHandler.HandleFunc("/l", func(w http.ResponseWriter, r *http.Request) {
+		server.listSessions(w, r)
+	})
 	routesHandler.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		server.serveContent(w, r, "404.html")
 	})
@@ -117,6 +125,21 @@ func NewTTYServer(config TTYServerConfig) (server *TTYServer) {
 	server.activeSessions = make(map[string]*ptyMaster)
 	server.httpServer.Handler = routesHandler
 	return server
+}
+
+func (server *TTYServer) listSessions(w http.ResponseWriter, r *http.Request) {
+	sessions := []string{}
+	for k := range server.activeSessions {
+		sessions = append(sessions, k)
+	}
+	jsonResp, err := json.Marshal(sessions)
+
+	if err != nil {
+		log.Info(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(jsonResp)
 }
 
 func getWSPath(sessionID string) string {
