@@ -90,6 +90,10 @@ func (server *TTYServer) serveContent(w http.ResponseWriter, r *http.Request, na
 	}
 }
 
+func getPodName() string{
+	podName := os.Getenv("HOSTNAME")
+	return podName
+}
 // NewTTYServer creates a new instance
 func NewTTYServer(config TTYServerConfig) (server *TTYServer) {
 	server = &TTYServer{
@@ -107,12 +111,12 @@ func NewTTYServer(config TTYServerConfig) (server *TTYServer) {
 
 	routesHandler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Default session
-		http.Redirect(w, r, "/s/1", http.StatusMovedPermanently)
+		http.Redirect(w, r, "/s/hardcoded", http.StatusMovedPermanently)
 	})
-	routesHandler.HandleFunc("/s/{sessionID}", func(w http.ResponseWriter, r *http.Request) {
+	routesHandler.HandleFunc("/s/hardcoded", func(w http.ResponseWriter, r *http.Request) {
 		server.handleSession(w, r)
 	})
-	routesHandler.HandleFunc("/ws/{sessionID}", func(w http.ResponseWriter, r *http.Request) {
+	routesHandler.HandleFunc("/ws/hardcoded", func(w http.ResponseWriter, r *http.Request) {
 		server.handleWebsocket(w, r)
 	})
 	routesHandler.HandleFunc("/l", func(w http.ResponseWriter, r *http.Request) {
@@ -147,8 +151,9 @@ func getWSPath(sessionID string) string {
 }
 
 func (server *TTYServer) handleWebsocket(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	sessionID := vars["sessionID"]
+	//vars := mux.Vars(r)
+	//sessionID := vars["sessionID"]
+	sessionID := "hardcoded"
 	defer log.Debug("Finished WS connection for ", sessionID)
 
 	// Validate incoming request.
@@ -188,9 +193,10 @@ func (server *TTYServer) handleWebsocket(w http.ResponseWriter, r *http.Request)
 }
 
 func (server *TTYServer) handleSession(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	sessionID := vars["sessionID"]
-
+	//vars := mux.Vars(r)
+	//sessionID := vars["sessionID"]
+	sessionID := "hardcoded"
+	log.Debugf("Session ID is: %s", sessionID)
 	log.Debugf("Handling web TTYReceiver session: %s", sessionID)
 
 	session := server.getSession(sessionID)
@@ -283,3 +289,4 @@ func (server *TTYServer) Stop() (err error) {
 	err = server.httpServer.Close()
 	return
 }
+

@@ -7,7 +7,12 @@ html, body {
 #terminal {
     position: fixed;
     top: 0;
-    width: 100%;
+    width: 50%;
+    height: 100%;
+}
+#image {
+    top: 0;
+    width: 50%;
     height: 100%;
 }
 
