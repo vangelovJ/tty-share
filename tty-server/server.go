@@ -111,12 +111,12 @@ func NewTTYServer(config TTYServerConfig) (server *TTYServer) {
 
 	routesHandler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Default session
-		http.Redirect(w, r, "/s/hardcoded", http.StatusMovedPermanently)
+		http.Redirect(w, r, "/s/1", http.StatusMovedPermanently)
 	})
-	routesHandler.HandleFunc("/s/hardcoded", func(w http.ResponseWriter, r *http.Request) {
+	routesHandler.HandleFunc("/s/{sessionID}", func(w http.ResponseWriter, r *http.Request) {
 		server.handleSession(w, r)
 	})
-	routesHandler.HandleFunc("/ws/hardcoded", func(w http.ResponseWriter, r *http.Request) {
+	routesHandler.HandleFunc("/ws/{sessionID}", func(w http.ResponseWriter, r *http.Request) {
 		server.handleWebsocket(w, r)
 	})
 	routesHandler.HandleFunc("/l", func(w http.ResponseWriter, r *http.Request) {
@@ -130,6 +130,7 @@ func NewTTYServer(config TTYServerConfig) (server *TTYServer) {
 	server.httpServer.Handler = routesHandler
 	return server
 }
+
 
 func (server *TTYServer) listSessions(w http.ResponseWriter, r *http.Request) {
 	sessions := []string{}
@@ -151,9 +152,9 @@ func getWSPath(sessionID string) string {
 }
 
 func (server *TTYServer) handleWebsocket(w http.ResponseWriter, r *http.Request) {
-	//vars := mux.Vars(r)
-	//sessionID := vars["sessionID"]
-	sessionID := "hardcoded"
+	vars := mux.Vars(r)
+	sessionID := vars["sessionID"]
+	//sessionID := "hardcoded"
 	defer log.Debug("Finished WS connection for ", sessionID)
 
 	// Validate incoming request.
@@ -180,6 +181,7 @@ func (server *TTYServer) handleWebsocket(w http.ResponseWriter, r *http.Request)
 	if session == nil {
 		session = server.createNewSession(sessionID)
 		go func() {
+			
 			server.addSession(sessionID, session)
 			session.Wait()
 			log.Infof("Session %s stopped", sessionID)
@@ -189,13 +191,17 @@ func (server *TTYServer) handleWebsocket(w http.ResponseWriter, r *http.Request)
 	}
 
 	// TODO: attach the ptyMaster
-	session.HandleReceiver(newWSConnection(conn))
+	//session.HandleReceiver(newWSConnection(conn))
+	// Remove the session when it's closed from the browser
+	if session.HandleReceiver(newWSConnection(conn)) {
+		server.removeSession(session)
+	}
 }
 
 func (server *TTYServer) handleSession(w http.ResponseWriter, r *http.Request) {
-	//vars := mux.Vars(r)
-	//sessionID := vars["sessionID"]
-	sessionID := "hardcoded"
+	vars := mux.Vars(r)
+	sessionID := vars["sessionID"]
+	//sessionID := "hardcoded"
 	log.Debugf("Session ID is: %s", sessionID)
 	log.Debugf("Handling web TTYReceiver session: %s", sessionID)
 
@@ -211,6 +217,10 @@ func (server *TTYServer) handleSession(w http.ResponseWriter, r *http.Request) {
 
 			server.removeSession(session)
 		}()
+		//Allow only one active connection to this session
+	}else{
+		log.Infof("Session %s already running", sessionID)
+		return
 	}
 
 	var t *template.Template
@@ -289,4 +299,5 @@ func (server *TTYServer) Stop() (err error) {
 	err = server.httpServer.Close()
 	return
 }
+
 

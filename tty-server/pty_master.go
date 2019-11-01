@@ -113,7 +113,8 @@ func (pty *ptyMaster) Stop() (err error) {
 	return
 }
 
-func (pty *ptyMaster) HandleReceiver(rawConn *WSConnection) {
+func (pty *ptyMaster) HandleReceiver(rawConn *WSConnection) bool{
+
 	rcvProtoConn := ttyCommon.NewTTYProtocolConn(rawConn)
 	log.Debugf("Got new TTYReceiver connection (%s). Serving it..", rawConn.Address())
 	pty.mainRWLock.Lock()
@@ -153,4 +154,7 @@ func (pty *ptyMaster) HandleReceiver(rawConn *WSConnection) {
 
 	log.Debugf("Closing receiver connection")
 	rcvProtoConn.Close()
+	return true
+
 }
+
