@@ -34,4 +34,4 @@ FROM alpine:3
 COPY --from=builder /output /
 
 EXPOSE "80"
-ENTRYPOINT ["/tty-server "]
+ENTRYPOINT ["/tty-server"]
