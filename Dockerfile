@@ -30,8 +30,8 @@ RUN go build -o out/tty-server ./tty-server/pty_master.go \
 RUN mkdir -p /output && \
     mv out/tty-server /output/
 
-FROM alpine:3
+FROM golang:1.13
 COPY --from=builder /output /
 
 EXPOSE "80"
-ENTRYPOINT ["/tty-server"]
+ENTRYPOINT ["./tty-server"]

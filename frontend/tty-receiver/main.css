@@ -7,7 +7,13 @@ html, body {
 #terminal {
     position: fixed;
     top: 0;
-    width: 100%;
+    width: 50%;
     height: 100%;
 }
-
+#text {
+    top: 0;
+    position: inherit;
+    width: 50%;
+    height: 100%;
+    float: right;
+}
