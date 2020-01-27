@@ -16,22 +16,6 @@
             console.log("Initial data", window.ttyInitialData)
         </script>
         <script src="/static/tty-receiver.js"></script>
-	<div id="text" style="
-    /* position: absolute; */
-"><p>1) Create partition<br>
-# fdisk -l<br>
-# fdisk /dev/sdf <br>
-2) Create physical volume<br>
-#pvcreate /dev/sdf[3,4]<br>
-3) Create volume group<br>
-# vgcreate datavg /dev/sdf[3,4]<br>
-4) Creating Mirrored logical volume<br>
-# lvcreate -L 50M -m1 -n mirrorlv datavg<br>
-5) Create filesystem and mount<br>
-		# mkfs:ext4 /dev/datavg/mirrorlv<br>
-		# mount /dev/datavg/mirrorlv /mnt/mirrorlv<br>
-</p>
-</div>
     </body>
 </html>
 
