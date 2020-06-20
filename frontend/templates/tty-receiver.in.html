@@ -3,6 +3,10 @@
     <head>
         <meta charset="UTF-8">
         <title>Terminal</title>
+        <script>
+        function myFunction() {
+            console.log("clicked")
+          }</script>
     </head>
     <body>
         <div id="terminal"></div>
@@ -16,7 +20,7 @@
             console.log("Initial data", window.ttyInitialData)
         </script>
         <script src="/static/tty-receiver.js"></script>
-	<div id="text" style="position: absolute;"><p>1) Create partition<br>
+	<div id="text"><p>1) Create partition<br>
 # fdisk -l<br>
 # fdisk /dev/sdf <br>
 2) Create physical volume<br>
@@ -29,6 +33,8 @@
 		# mkfs:ext4 /dev/datavg/mirrorlv<br>
 		# mount /dev/datavg/mirrorlv /mnt/mirrorlv<br>
 </p>
+<button type="button" onclick="myFunction()">Next</button>
 </div>
+
     </body>
 </html>

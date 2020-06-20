@@ -12,8 +12,10 @@ html, body {
 }
 #text {
     top: 0;
-    position: inherit;
     width: 50%;
     height: 100%;
     float: right;
+}
+button {
+    position: inherit;
 }

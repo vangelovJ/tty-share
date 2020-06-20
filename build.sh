@@ -1,16 +1,15 @@
 #!/bin/bash
 set -x
-cp -rp /home/venven/go/tty-share /tty-server
+cp -rp /home/venven/Go/tty-share /tty-server
 cd /tty-server
 cd frontend
 npm install 
 node ./node_modules/webpack/bin/webpack.js
-
 mkdir -p /output/tty-server/frontend/public
 cp -r public /output/
 
 mkdir -p /tty-server-1
-cp -rp /home/venven/go/tty-share/* /tty-server-1
+cp -rp /home/venven/Go/tty-share/* /tty-server-1
 cp -rp /output/* /tty-server-1/frontend/
 cd /tty-server-1
 go-bindata --prefix frontend/public/ -o tty-server/assets_bundle.go \
@@ -24,5 +23,3 @@ go build -o out/tty-server ./tty-server/pty_master.go \
     ./tty-server/websockets_connection.go ./tty-server/assets_bundle.go
 
 mv out/tty-server /tmp/tty-server
-rm -rf /tty-server
-rm -rf /output
