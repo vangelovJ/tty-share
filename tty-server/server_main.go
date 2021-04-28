@@ -16,12 +16,14 @@ func main() {
 	commandArgs := flag.String("args", "", "The base command arguments")
 	webAddress := flag.String("web_address", ":80", "The bind address for the web interface. This is the listening address for the web server that hosts the \"browser terminal\". You might want to change this if you don't want to use the port 80, or only bind the localhost.")
 	frontendPath := flag.String("frontend_path", "", "The path to the frontend resources. By default, these resources are included in the server binary, so you only need this path if you don't want to use the bundled ones.")
+	once := flag.Bool("once",false,"Close server after active session is closed")
 	flag.Parse()
 
 	log := MainLogger
 	log.SetLevel(logrus.DebugLevel)
 
 	config := TTYServerConfig{
+		Once:         *once,
 		WebAddress:   *webAddress,
 		FrontendPath: *frontendPath,
 		CommandName:  *commandName,

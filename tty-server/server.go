@@ -31,6 +31,7 @@ type SessionTemplateModel struct {
 
 // TTYServerConfig is used to configure the tty server before it is started
 type TTYServerConfig struct {
+	Once         bool
 	WebAddress   string
 	FrontendPath string
 	CommandName  string
@@ -90,10 +91,6 @@ func (server *TTYServer) serveContent(w http.ResponseWriter, r *http.Request, na
 	}
 }
 
-func getPodName() string{
-	podName := os.Getenv("HOSTNAME")
-	return podName
-}
 // NewTTYServer creates a new instance
 func NewTTYServer(config TTYServerConfig) (server *TTYServer) {
 	server = &TTYServer{
@@ -195,6 +192,11 @@ func (server *TTYServer) handleWebsocket(w http.ResponseWriter, r *http.Request)
 	// Remove the session when it's closed from the browser
 	if session.HandleReceiver(newWSConnection(conn)) {
 		server.removeSession(session)
+		//stop the server after the session is removed
+		if server.config.Once != false {
+		    log.Infof("Closing server because -once flag was supplied")
+		    server.Stop()
+		}
 	}
 }
 
@@ -216,6 +218,7 @@ func (server *TTYServer) handleSession(w http.ResponseWriter, r *http.Request) {
 			log.Infof("Session %s stopped", sessionID)
 
 			server.removeSession(session)
+			//stop the server after the session is stopped/closed
 		}()
 		//Allow only one active connection to this session
 	}else{

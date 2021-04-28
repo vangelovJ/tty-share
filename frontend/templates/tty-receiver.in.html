@@ -7,6 +7,16 @@
         function myFunction() {
             console.log("clicked")
           }</script>
+	<script>
+	function changeMe() {
+    		var div = document.getElementById('text').innerHTML;
+    		if (div === 'First') {
+        		document.getElementById('text').innerHTML = "<p> How to list files in linux? <br>Use the following command:  <br>#ls -la <br>";
+    		} else {
+        		document.getElementById('text').innerHTML = "First";
+    		}
+	}
+	</script>
     </head>
     <body>
         <div id="terminal"></div>
@@ -20,21 +30,11 @@
             console.log("Initial data", window.ttyInitialData)
         </script>
         <script src="/static/tty-receiver.js"></script>
-	<div id="text"><p>1) Create partition<br>
-# fdisk -l<br>
-# fdisk /dev/sdf <br>
-2) Create physical volume<br>
-#pvcreate /dev/sdf[3,4]<br>
-3) Create volume group<br>
-# vgcreate datavg /dev/sdf[3,4]<br>
-4) Creating Mirrored logical volume<br>
-# lvcreate -L 50M -m1 -n mirrorlv datavg<br>
-5) Create filesystem and mount<br>
-		# mkfs:ext4 /dev/datavg/mirrorlv<br>
-		# mount /dev/datavg/mirrorlv /mnt/mirrorlv<br>
-</p>
-<button type="button" onclick="myFunction()">Next</button>
-</div>
+	<div id="button">
+        <button type="button" onclick="changeMe()">Next</button>
+        </div>
+	<div id="text"><p>First</p>
+        </div>
 
     </body>
 </html>
