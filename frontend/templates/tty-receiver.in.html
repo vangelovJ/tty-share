@@ -1,22 +1,9 @@
 <!doctype html>
 <html>
     <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
         <meta charset="UTF-8">
         <title>Terminal</title>
-        <script>
-        function myFunction() {
-            console.log("clicked")
-          }</script>
-	<script>
-	function changeMe() {
-    		var div = document.getElementById('text').innerHTML;
-    		if (div === 'First') {
-        		document.getElementById('text').innerHTML = "<p> How to list files in linux? <br>Use the following command:  <br>#ls -la <br>";
-    		} else {
-        		document.getElementById('text').innerHTML = "First";
-    		}
-	}
-	</script>
     </head>
     <body>
         <div id="terminal"></div>
@@ -29,12 +16,54 @@
             }
             console.log("Initial data", window.ttyInitialData)
         </script>
-        <script src="/static/tty-receiver.js"></script>
-	<div id="button">
-        <button type="button" onclick="changeMe()">Next</button>
-        </div>
-	<div id="text"><p>First</p>
-        </div>
+        <script type="text/javascript">
+            function nextTutorial() {
+                var element = document.getElementById('step-1');
+                var element2 = document.getElementById('step-2');
+                element.className= 'step';
+                element2.className = 'active step';
+                element.style.display = "none";
+                element2.style.display = "block";
 
+            }
+        </script>
+        <script src="/static/tty-receiver.js"></script>
+        <div id="course-title" class="">
+              <h3>
+                Directories and File Management
+              </h3>            
+            <div id="step-1" class="active step" data-id="1" style="display: block;">
+                <h4>Creating and removing directories</h4>
+              <div class="content">
+                <p>Move to / directory</p>
+                <p>Create a new directory under / with the name of newdir</p>
+                <p>Create the following directories with the following names and structure: /dir1/dir2/dir3</p>
+                <p>Remove the following directories /dir1 /dir1/dir2 /dir1/dir2/dir3</p>
+                <p>Try using a single command (check the man page for mkdir) to create the following directories: /dir1/dir2/dir3</p>
+              </div>
+          
+              <div class="row">
+          
+                  <button class="next" onclick="nextTutorial()">
+                    Continue
+                  </button>
+              </div>
+            </div>
+            <div id="step-2" data-id="2" style="display: none;">
+                <h4>File management</h4>
+              <div class="content">
+                <p>Create an empty file insde /dir1/dir2/dir3 called <q>"intro"</q></p>
+                <p>Use <code>echo</code> to append the following sentence in the <q>intro</q> file:</p>
+                <p><q>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</q></p>
+              </div>
+          
+              <div class="row">
+          
+                  <button class="next">
+                    Finish
+                  </button>
+              </div>
+            </div>
+        </div>
     </body>
 </html>

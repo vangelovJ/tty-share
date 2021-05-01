@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
@@ -59,6 +58,7 @@ func (err *TTYServerError) Error() string {
 	return err.msg
 }
 
+
 func (server *TTYServer) serveContent(w http.ResponseWriter, r *http.Request, name string) {
 	// If a path to the frontend resources was passed, serve from there, otherwise, serve from the
 	// builtin bundle
@@ -92,6 +92,7 @@ func (server *TTYServer) serveContent(w http.ResponseWriter, r *http.Request, na
 }
 
 // NewTTYServer creates a new instance
+
 func NewTTYServer(config TTYServerConfig) (server *TTYServer) {
 	server = &TTYServer{
 		config: config,
@@ -127,7 +128,6 @@ func NewTTYServer(config TTYServerConfig) (server *TTYServer) {
 	server.httpServer.Handler = routesHandler
 	return server
 }
-
 
 func (server *TTYServer) listSessions(w http.ResponseWriter, r *http.Request) {
 	sessions := []string{}

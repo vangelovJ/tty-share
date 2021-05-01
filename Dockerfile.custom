@@ -1,0 +1,5 @@
+FROM golang:1.13
+COPY out/tty-server /
+
+EXPOSE "80"
+ENTRYPOINT ["/tty-server"]

@@ -10,16 +10,38 @@ html, body {
     width: 50%;
     height: 100%;
 }
-#text {
+
+#course-title {
     top: 0;
+    text-align: center;
+    background: #26a0c9;
+    float: right;
+    color: rgb(255, 255, 255);
     width: 50%;
     height: 100%;
-    float: right;
-    background-color: coral;
 }
-#button {
-     top: 0;
-     width: 60%;
-     height: 50%;
-     float: right;
+#tutorial {
+    float: right;
+    border-right: 1px solid #d0d0d0;
+    height: calc(100vh - 68px);
+    overflow: hidden;
+    position: relatice;
+    background: #FFF;
+    margin: 0;
+    padding: 0;
+}
+button {
+    position: inherit;
+}
+.next {
+    margin-bottom: 40px;
+}
+.active.step {
+    word-wrap: break-word;
+    font-size: 1.1rem;
+    padding-top: 1.5rem;
+    height: 100%;
+    padding: 20px;
+    background: #d49c2447;
+    text-align: left;
 }
